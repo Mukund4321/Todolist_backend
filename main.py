@@ -58,24 +58,31 @@ def specific_task(task_id: int, db: Session = Depends(get_db)):
      return {"error": "Task not found"}
 
 @app.post("/add")
-def create_task(task: Task):
-    tasks.append(task)
-    return {"message": "task appended"}
+def create_task(task: Task, db: Session = Depends(get_db)):
+    db_task = database_models.Task(id=task.id, task=task.task, status=task.status)
+    db.add(db_task)
+    db.commit()
+    return {"message": "Task created"}
 
 @app.patch("/task/{id}")
-def update_task(id: int, updated_task: Task):
-    for i, task in enumerate(tasks):
-        if task.id == id:
-            tasks[i] = updated_task
-            return {"message": "Task updated"}
+def update_task(id: int, updated_task: Task, db: Session = Depends(get_db)):
+    task = db.query(database_models.Task).filter(database_models.Task.id == id).first()
+    if task:
+        task.task = updated_task.task
+        task.status = updated_task.status
+        db.commit()
+        return {"message": "Task updated"}
     return {"message": "Task not found"}
 
 @app.delete("/task/{id}")
-def delete_task(id: int):
-    del tasks
-    tasks = [task for task in tasks if task.id != id]
-    return {"message": "Task deleted"}
-
+def delete_task(id: int, db: Session = Depends(get_db)):
+    task = db.query(database_models.Task).filter(database_models.Task.id == id).first()
+    if task:
+        db.delete(task)
+        db.commit()
+        return {"message": "Task deleted"}
+    return {"message": "Task not found"}
+  
 
 
 if __name__ == "__main__":
