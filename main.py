@@ -44,18 +44,18 @@ def greet():
     return "Backend is running"
 
 
-
-
 @app.get("/task")
-def get_tasks():
+def get_tasks(db: Session = Depends(get_db)):
+    tasks = db.query(database_models.Task).all()
     return tasks
+    
 
 @app.get("/task/{id}")
-def specific_task(id: int, task: Task):
-    for task in tasks:
-        if task.id == id:
-            return task
-    return {"message": "Task not found"}
+def specific_task(task_id: int, db: Session = Depends(get_db)):
+     task = db.query(database_models.Task).filter(database_models.Task.id == task_id).first()
+     if task:
+        return task
+     return {"error": "Task not found"}
 
 @app.post("/add")
 def create_task(task: Task):
